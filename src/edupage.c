@@ -7,6 +7,8 @@
 #include <string.h>
 #include <regex.h>
 
+static edupage_error_callback error_callback;
+
 size_t discard_writer(void *buffer, size_t size, size_t nmemb, void *userp) {
     return size*nmemb;
 }
@@ -37,17 +39,24 @@ char* header_get_phpsessid(char const * const header) {
     return sessid;
 }
 
+void edupage_set_error_callback(edupage_error_callback c) {
+    error_callback = c;
+}
+
 struct EdupageClient* edupage_client_create(char const username[static 1], char const password[static 1], char const server[static 1]) {
     if(strlen(username) >= 30) {
+        error_callback(EDUPAGE_INVALID_PARAMETER, "username over length limit, must be less than 30");
         return nullptr;
     }
 
     if(strlen(password) >= 30) {
+        error_callback(EDUPAGE_INVALID_PARAMETER, "password over length limit, must be less than 30");
         return nullptr;
     }
 
     curl_global_init(CURL_GLOBAL_ALL);
     CURL* handle = curl_easy_init();
+    curl_easy_setopt(handle, CURLOPT_VERBOSE, true);
 
     char buffer[256];
     char* url_format = "https://%s.edupage.org/login/edubarLogin.php";
@@ -67,6 +76,7 @@ struct EdupageClient* edupage_client_create(char const username[static 1], char 
     CURLcode code = curl_easy_perform(handle);
     
     if (code) {
+        error_callback(EDUPAGE_COMMS_ERROR, "couldn't communicate with server");
         return nullptr;
     }
 
@@ -79,9 +89,29 @@ struct EdupageClient* edupage_client_create(char const username[static 1], char 
         index++;
     } while(index < hdr->amount && phpsessid == nullptr);
 
+    curl_easy_header(handle, "location", 0, CURLH_HEADER, -1, &hdr);
+
+    if (strcmp(hdr->value, "/user/")) {
+        error_callback(EDUPAGE_AUTH_ERROR, "failed to authorize, invalid credentials");
+        free(phpsessid);
+        curl_easy_cleanup(handle);
+        return nullptr;
+    }
+
+    long http_code = 0;
+    curl_easy_getinfo (handle, CURLINFO_RESPONSE_CODE, &http_code);
+
+    if (http_code != 302) {
+        error_callback(EDUPAGE_AUTH_ERROR, "failed to authorize");
+        free(phpsessid);
+        curl_easy_cleanup(handle);
+        return nullptr;
+    }
+
     curl_easy_cleanup(handle);
 
     if (phpsessid == nullptr) {
+        error_callback(EDUPAGE_AUTH_ERROR, "failed to authorize, missing PHPSESSID");
         free(phpsessid);
         return nullptr;
     }

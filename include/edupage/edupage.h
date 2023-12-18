@@ -1,12 +1,20 @@
 #ifndef EDUPAGE_EDUPAGE_H
 #define EDUPAGE_EDUPAGE_H
 
-struct EdupageCanteen {};
-
 struct EdupageClient {
     char * server;
     char * sessid;
 };
+
+enum EdupageError {
+    EDUPAGE_INVALID_PARAMETER,
+    EDUPAGE_COMMS_ERROR,
+    EDUPAGE_AUTH_ERROR,
+};
+
+typedef void (*edupage_error_callback) (enum EdupageError error, char const * const msg);
+
+void edupage_set_error_callback(edupage_error_callback c);
 
 /* Creates a client and log it in */
 struct EdupageClient * edupage_client_create(char const username[static 1], char const password[static 1], char const server[static 1]);
