@@ -22,8 +22,14 @@ int main(void) {
     
     struct EdupageClient *client = edupage_client_create(username, password, server);
     
-   // assert(client != nullptr);
+    assert(client != nullptr);
 
+    time_t t;
+    time(&t);
+
+    char const * const meal = edupage_client_get_meal(client, t);
+    puts(meal);
+    
     edupage_client_destroy(client);
 
     return 0;

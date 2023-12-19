@@ -1,15 +1,21 @@
 #ifndef EDUPAGE_EDUPAGE_H
 #define EDUPAGE_EDUPAGE_H
 
+#include <time.h>
 struct EdupageClient {
     char * server;
     char * sessid;
 };
 
+struct EdupageCanteen {
+    char const * const data;
+};
+
 enum EdupageError {
-    EDUPAGE_INVALID_PARAMETER,
-    EDUPAGE_COMMS_ERROR,
-    EDUPAGE_AUTH_ERROR,
+    EDUPAGE_ERR_INVALID_PARAMETER,
+    EDUPAGE_ERR_COMMS,
+    EDUPAGE_ERR_AUTH,
+    EDUPAGE_ERR_INVALID_RESP,
 };
 
 typedef void (*edupage_error_callback) (enum EdupageError error, char const * const msg);
@@ -37,13 +43,13 @@ struct EdupageClient * edupage_client_create(char const username[static 1], char
 void edupage_client_destroy(struct EdupageClient * client);
 
 /**
- * @brief Retrieves edupage canteen.
+ * @brief Retrieves edupage canteen meal for a specific date.
  * 
  * @param client client handle
- * @param date format YYYYMMdd
+ * @param date t date
  * @return struct EdupageCanteen 
  */
-struct EdupageCanteen edupage_client_get_canteen(struct EdupageClient const client[static 1], char const * const date);
+char const * const edupage_client_get_meal(struct EdupageClient const client[static 1], const time_t t);
 
 /**
  * @brief Changes order status for a specific day.
