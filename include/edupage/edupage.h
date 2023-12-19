@@ -2,13 +2,15 @@
 #define EDUPAGE_EDUPAGE_H
 
 #include <time.h>
+
 struct EdupageClient {
     char * server;
     char * sessid;
 };
 
 struct EdupageCanteen {
-    char const * const data;
+    size_t count;
+    char * meal_plan[];
 };
 
 enum EdupageError {
@@ -36,20 +38,27 @@ void edupage_set_error_callback(edupage_error_callback c);
 struct EdupageClient * edupage_client_create(char const username[static 1], char const password[static 1], char const server[static 1]);
 
 /**
- * @brief Destroys the client and cleans up.
+ * @brief Destroys the client.
  * 
- * @param client client handle
+ * @param client client
  */
 void edupage_client_destroy(struct EdupageClient * client);
 
 /**
- * @brief Retrieves edupage canteen meal for a specific date.
+ * @brief Destroys the canteen.
+ * 
+ * @param canteen canteen
+ */
+void edupage_canteen_destroy(struct EdupageCanteen * canteen);
+
+/**
+ * @brief Retrieves meals for a specific week.
  * 
  * @param client client handle
  * @param date t date
  * @return struct EdupageCanteen 
  */
-char const * const edupage_client_get_meal(struct EdupageClient const client[static 1], const time_t t);
+struct EdupageCanteen* edupage_client_get_meals(struct EdupageClient const client[static 1], const time_t t);
 
 /**
  * @brief Changes order status for a specific day.

@@ -27,8 +27,9 @@ int main(void) {
     time_t t;
     time(&t);
 
-    char const * const meal = edupage_client_get_meal(client, t);
-    puts(meal);
+    struct EdupageCanteen * c = edupage_client_get_meals(client, t);
+
+    edupage_canteen_destroy(c);
     
     edupage_client_destroy(client);
 
